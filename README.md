@@ -3,7 +3,7 @@ Xiaomi Purifier lovelace card with css animation
 
 
 ## HACS Installation
-1. HACS -> Settings -> Add custom repository <-> Plugins
+1. HACS -> Settings -> Add custom repository <-> Plugin
 2. Find 'xiaomi purifier' in HACS Plugins
 3. Install and add to Lovelace
 
