@@ -228,8 +228,7 @@ class XiaomiPurifier extends HTMLElement {
     $('.footer div.favorite-level input[type="range"]').onchange = (e)=>{
         $('.footer div.favorite-level output').value = e.target.value;
         // set favorite level
-        this._hass.callService('xiaomi_miio', 'fan_set_favorite_level', {
-          entity_id: this.config.entity,
+        this.callMIIO('set_favorite_level', {
           level: e.target.value,
         })
     }
@@ -321,6 +320,21 @@ class XiaomiPurifier extends HTMLElement {
       entity_id,
       ...data
     })
+  }
+
+  callMIIO(name, data = {}){
+    const entity_id = this.config.entity;
+    if( this._hass.services.xiaomi_miio ){
+      this._hass.callService('xiaomi_miio', `fan_${name}`, {
+        entity_id, 
+        ...data
+      })
+    } else {
+      this._hass.callService('fan', `xiaomi_miio_${name}`, {
+        entity_id,
+        ...data
+      })
+    }
   }
 
   // led灯切换
