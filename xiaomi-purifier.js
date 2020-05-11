@@ -112,7 +112,7 @@ class XiaomiPurifier extends HTMLElement {
             .content p{padding:0;margin:0;}
             .content p:nth-child(1){padding-top: 50px;font-size:12px;color:#ddd;}
             .content p:nth-child(1).advanced{padding-top: 70px !important;}
-            .content p:nth-child(2){font-size:80px;color:white; /*margin: 40px 0;*/ line-height: 80px;}
+            .content p:nth-child(2){font-size:80px;color:white; /*margin: 40px 0;*/ line-height: 90px;}
             .content p:nth-child(3){color:#eee;}
             .content p:nth-child(4) {padding-top: 30px;}
             .content p:nth-child(4) span{color: white; }
