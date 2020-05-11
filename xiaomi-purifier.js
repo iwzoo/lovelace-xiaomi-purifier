@@ -466,3 +466,4 @@ class XiaomiPurifier extends HTMLElement {
 }
 
 customElements.define('xiaomi-purifier', XiaomiPurifier);
+
