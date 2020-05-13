@@ -16,7 +16,8 @@ class XiaomiPurifier extends HTMLElement {
                     <ha-icon icon="mdi:air-filter"></ha-icon> 
                     <span class="title">空气净化器</span>
                 </a>
-                <paper-icon-button icon="mdi:menu" style="margin-top:-8px;"></paper-icon-button> 
+                <paper-icon-button id="buzzer" icon="mdi:volume-low" style="margin-top:-8px;"></paper-icon-button> 
+                <paper-icon-button id="more" icon="mdi:menu" style="margin-top:-8px;"></paper-icon-button> 
             </div>
             <div class="duang">
             <div class="body">
@@ -75,7 +76,7 @@ class XiaomiPurifier extends HTMLElement {
             
             .ha-air-filter-panel{overflow:hidden;}            
             .card-header{display:flex;justify-content: space-between;}
-            .card-header .name{cursor: pointer;text-decoration: none;}
+            .card-header .name{cursor: pointer;text-decoration: none;flex-grow: 1;}
                         
            .content-bg{
               height: 300px;
@@ -143,7 +144,8 @@ class XiaomiPurifier extends HTMLElement {
 
             /**开机**/
             .on .content-bg div{background: rgba(1,182,165,.1);}
-            .on .content{background:#01b6a5;}
+            .on .content{background:#01b6a5;  overflow:hidde;}
+            .on.ledoff .content{background:  rgba(0,0,0,0.9) !important;}
             .on .footer .status span{background:#f44336;color:white;}
             .on .footer .status p{var(--primary-text-color); /*#222;*/}
             .on .footer div.active span{background:#01b6a5;color:white;}
@@ -160,7 +162,7 @@ class XiaomiPurifier extends HTMLElement {
 
             /**关机**/
             .off .content-bg div{background: rgba(0,0,0,.1);}
-            .off .content{background:#607d8b;}
+            .off .content{background:#607d8b;overflow:hidden;}
             .off .footer div{color:gray!important;}
             .off .footer .status span{background:#01b6a5;color:white;}
             .off .footer .status p{color:#222;}
@@ -174,6 +176,7 @@ class XiaomiPurifier extends HTMLElement {
     const $ = this.shadow.querySelector.bind(this.shadow)
     const $$ = this.shadow.querySelectorAll.bind(this.shadow);
     this.$ = $
+    this.$$ = $$;
     // 开-关机
     $('.footer div:nth-child(1) span').onclick = () => {
       let ls = $('.ha-air-filter-panel').classList
@@ -195,26 +198,26 @@ class XiaomiPurifier extends HTMLElement {
     $('.footer div:nth-child(3) span').onclick = this.set_speed.bind(this, 'Silent')
     // 最爱
     // $('.footer div:nth-child(4) span').onclick = this.set_speed.bind(this, 'Favorite')
-    $('.footer div:nth-child(4)').onmousedown = (e)=>{
+    $('.footer div:nth-child(4)').addEventListener(('ontouchstart' in document.documentElement ? 'touchstart' : 'mousedown'), (e)=>{
         holdStarter = setTimeout(()=>{
           holdStarter = null;
           // holding...
-          console.log($('.footer div:nth-child(4)'));
+          
           if(!$('.footer div:nth-child(4)').classList.contains('active')) return;
           [].forEach.call($$('.footer>div:not(.favorite-level)'), el=>{
             el.classList.toggle('hide');
           });
           $('.footer div.favorite-level').classList.toggle('hide');
         }, holdDelay);
-    }
-    $('.footer div:nth-child(4)').onmouseup = ()=>{
+    });
+    $('.footer div:nth-child(4)').addEventListener(('ontouchend' in document.documentElement ? 'touchend' : 'mouseup'),  ()=>{
         if( holdStarter ) {
           clearTimeout(holdStarter);
           holdStarter = null;
           // clicked;
           this.set_speed('Favorite');
         }
-    }
+    });
     $('.footer div.favorite-level .icon-button').onclick = ()=>{
         [].forEach.call($$('.footer>div:not(.favorite-level)'), el=>{
           el.classList.toggle('hide');
@@ -233,9 +236,29 @@ class XiaomiPurifier extends HTMLElement {
         })
     }
     // 更多
-    $('.card-header paper-icon-button').onclick = () => {
+    $('.card-header paper-icon-button#more').onclick = () => {
       const entityId = this.config.entity;
       this.fire('hass-more-info', { entityId })
+    }
+    // turn on/off buzzer
+    $('.card-header paper-icon-button#buzzer').onclick =(e) =>{
+      const buzzer = e.target.getAttribute('icon')==='mdi:volume-low';
+      this.callMIIO(buzzer?'set_buzzer_off':'set_buzzer_on', {});
+    }
+    // switch led
+    let clickStarter = null;
+    $('.body .content').onclick = (e)=>{
+      if( clickStarter ){
+        clearTimeout(clickStarter);
+        clickStarter = null;
+        const isoff = $('.ha-air-filter-panel').classList.contains('ledoff');
+        this.callMIIO(isoff?'set_led_on':'set_led_off',{} );    
+        return;  
+      }
+      clickStarter = setTimeout(()=>{
+        clickStarter = null;
+      }, 200);
+      
     }
   }
 
@@ -286,6 +309,7 @@ class XiaomiPurifier extends HTMLElement {
         background-color: #01b6a5;
         position: absolute;
       }
+      .off .duang .lizi{display: none;}
       ${arr.join('')}`
     f.appendChild(style)
     $('.duang').insertBefore(f, $('.body'))
@@ -314,7 +338,7 @@ class XiaomiPurifier extends HTMLElement {
   }
 
   // 服务
-  call(name, data = {}) {
+  call(name, data = {}) { this.log('call service: ', name, data);
     const entity_id = this.config.entity;
     this._hass.callService('fan', name, {
       entity_id,
@@ -322,7 +346,7 @@ class XiaomiPurifier extends HTMLElement {
     })
   }
 
-  callMIIO(name, data = {}){
+  callMIIO(name, data = {}){this.log('call miio service: ', name, data);
     const entity_id = this.config.entity;
     if( this._hass.services.xiaomi_miio ){
       this._hass.callService('xiaomi_miio', `fan_${name}`, {
@@ -348,21 +372,28 @@ class XiaomiPurifier extends HTMLElement {
     });
   }
 
-  update({ title, mode, aqi, filter_life_remaining, temperature, humidity, state, favorite_level }) {
-    const { $ } = this
+  update({ title, mode, aqi, filter_life_remaining, temperature, humidity, state, favorite_level, buzzer, ledon }) {
+    const { $,$$ } = this
+
     // 开启&关闭
     let ls = $('.ha-air-filter-panel').classList
     if (state === 'on' && ls.contains('off')) {
       ls.remove('off')
       ls.add('on')
       $('.footer div:nth-child(1) p').textContent = '关闭'
-      this.duang()
+      this.duang();
     } else if (state === 'off' && ls.contains('on')) {
       ls.remove('on')
       ls.add('off')
-      $('.footer div:nth-child(1) p').textContent = '开启'
+      $('.footer div:nth-child(1) p').textContent = '开启';
     }
     $('.title').textContent = title
+
+    if( ls.contains('ledoff') && ledon ){
+      ls.remove('ledoff');
+    } else if( ledon===false && !ls.contains('ledoff') ){
+      ls.add('ledoff');
+    }
     // 温湿度
     if( this.config.advanced===true ){
         $('.tmp-body div:nth-child(1) span').textContent = temperature
@@ -418,11 +449,13 @@ class XiaomiPurifier extends HTMLElement {
     // 最爱模式风扇速度
     if( favorite_level ){
         $('.footer div.favorite-level input[type="range"]').value = favorite_level;
-        $('.footer div.favorite-level input[type="range"]').dispatchEvent(new Event('change',{
+        $('.footer div.favorite-level input[type="range"]').dispatchEvent(new Event('input',{
           bubbles: true,
           cancelable: true
         }));
     }
+    // buzzer
+    $('.card-header paper-icon-button#buzzer').setAttribute('icon', buzzer?'mdi:volume-low':'mdi:volume-variant-off');
   }
 
   set hass(hass) {
@@ -448,9 +481,16 @@ class XiaomiPurifier extends HTMLElement {
         filter_hours_used: attrs['filter_hours_used'] || 0,
         purify_volume: attrs['purify_volume'] || 0,
         led: attrs['led'] ? '开启' : '关闭',
-        favorite_level: attrs['favorite_level']
+        favorite_level: attrs['favorite_level'],
+        buzzer: attrs['buzzer']||false,
+        ledon: attrs['led']||false,
       })
     }
+  }
+  // 加入日志开关l
+  log() {
+    
+//      console.log(...arguments)
   }
 
   setConfig(config) {
@@ -466,4 +506,3 @@ class XiaomiPurifier extends HTMLElement {
 }
 
 customElements.define('xiaomi-purifier', XiaomiPurifier);
-
