@@ -1,6 +1,12 @@
 # lovelace-xiaomi-purifier
 Xiaomi Purifier lovelace card with css animation
 
+## Extra Features
+1. compact view to show temperature and humidity 
+1. button to turn on/off buzzer
+1. double click to swith led 
+1. hold "Favorite" button to adjust fan speed
+
 
 ## HACS Installation
 1. HACS -> Settings -> Add custom repository <-> Plugin
