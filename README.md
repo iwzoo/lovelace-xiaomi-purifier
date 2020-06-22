@@ -29,6 +29,42 @@ Xiaomi Purifier lovelace card with css animation
   advanced: #optional (true for showing temperature and humidity in the middle, otherwise shows in green panel)
   ```
   
+### Language 
+Displays English texts by default, for Chinese language users, add 
+```
+language: chs
+``` 
+to card configuration for displaying texts in Chinese.
+
+Add translations to get your own language support. 
+``` 
+translate: 
+   'Good': '优',
+   'Moderate': '良',
+   'Mild Unhealthy':'轻度污染',
+   'Unhealthy': '中度污染',
+   'Very Unhealthy': '重度污染',
+   'Hazardous': '严重污染',
+
+   'Air Purifier': '空气净化器',
+
+   'On': '开启',
+   'Off': '关闭',
+
+   'Set speed': '设置速度',
+   'Device turned on': '开启设备',
+   'Device turned off': '关闭设备',
+   'Indoor AQ': '室内空气',
+
+   'Auto': '自动',
+   'Silent': '睡眠',
+   'Favorite':'最爱',
+
+   'Temperature': '温度',
+   'Humidity': '湿度'
+
+```
+
 
 ## Credits
 [shaonianzhentan](https://github.com/shaonianzhentan/lovelace-air-filter) (Original Author)
