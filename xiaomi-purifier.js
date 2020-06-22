@@ -1,4 +1,40 @@
-class XiaomiPurifier extends HTMLElement {
+class XiaomiPurifier extends HTMLElement {  
+  _t(str){
+    const chinese = {
+      'Good': '优',
+      'Moderate': '良',
+      'Mild Unhealthy':'轻度污染',
+      'Unhealthy': '中度污染',
+      'Very Unhealthy': '重度污染',
+      'Hazardous': '严重污染',
+
+      'Air Purifier': '空气净化器',
+
+      'On': '开启',
+      'Off': '关闭',
+
+      'Set speed': '设置速度',
+      'Device turned on': '开启设备',
+      'Device turned off': '关闭设备',
+      'Indoor AQ': '室内空气',
+      
+      'Auto': '自动',
+      'Silent': '睡眠',
+      'Favorite':'最爱',
+
+      'Temperature': '温度',
+      'Humidity': '湿度'
+    }
+    if( !this.config ) return str;
+    const translate = this.config.translate||(()=>{
+      return this.config.language==='chs' ? chinese : null;
+    })()||{};
+    if( typeof translate[str] === 'string' ){
+        return translate[str];
+    }
+    return str;
+}
+
   constructor() {
     super()
     this.fan_mode = {
@@ -24,8 +60,8 @@ class XiaomiPurifier extends HTMLElement {
                 <div class="content">
                   <p>PM2.5(μg/m³)</p>
                   <p class="var-aqi">38</p>
-                  <p>室内空气 <span class="var-quality">优</span></p>
-                  <p><span class="temperature"><iron-icon icon="mdi:home-thermometer-outline"></iron-icon><b>26</b>&#8451;</span><span class="humidity"><iron-icon icon="mdi:water-percent"></iron-icon><b>35</b>%</span></p>
+                  <p><span data-title="Indoor AQ">室内空气</span> <span class="var-quality">优</span></p>
+                  <p><span class="temperature"><ha-icon icon="mdi:home-thermometer-outline"></ha-icon><b>26</b>&#8451;</span><span class="humidity"><ha-icon icon="mdi:water-percent"></ha-icon><b>35</b>%</span></p>
                 </div>
                 <div class="content-bg">
                   <div></div>
@@ -37,11 +73,11 @@ class XiaomiPurifier extends HTMLElement {
             <div class="tmp-body hide">
                 <div>
                   <span>40</span>
-                  <p>温度(℃)</p>
+                  <p><span data-title="Temperature">温度</span> (℃)</p>
                 </div>
                 <div>
                   <span>50</span>
-                  <p>湿度(%)</p>
+                  <p><span data-title="Humidity">湿度</span> (%)</p>
                 </div>
             </div>
             <div class="footer">
@@ -51,18 +87,18 @@ class XiaomiPurifier extends HTMLElement {
               </div>
               <div>
               <span><ha-icon icon="mdi:brightness-auto" ></ha-icon></span>
-                <p>自动</p>
+                <p data-title="Auto">自动</p>
               </div>
               <div>
               <span><ha-icon icon="mdi:power-sleep" ></ha-icon></span>
-                <p>睡眠</p>
+                <p data-title="Silent">睡眠</p>
               </div>
               <div>
               <span><ha-icon icon="mdi:heart" ></ha-icon></span>
-                <p>最爱</p>
+                <p data-title="Favorite">最爱</p>
               </div>  
               <div class="favorite-level hide">
-                <div><output>3</output><span class="icon-button"><iron-icon icon="mdi:chevron-down"></iron-icon></span><input type="range" min="0" max="16" /></div>
+                <div><output>3</output><span class="icon-button"><ha-icon icon="mdi:chevron-down"></ha-icon></span><input type="range" min="0" max="16" /></div>
               </div>    
             </div>
             <div>
@@ -118,14 +154,14 @@ class XiaomiPurifier extends HTMLElement {
             .content p:nth-child(4) {padding-top: 30px;}
             .content p:nth-child(4) span{color: white; }
             .content p:nth-child(4) span b{font-weight: normal;font-size: 2em; padding:0 3px;}
-            .content p:nth-child(4) span iron-icon{margin-top: -10px; color: rgba(255,255,255,0.7);}
+            .content p:nth-child(4) span ha-icon{margin-top: -10px; color: rgba(255,255,255,0.7);}
             .content p:nth-child(4) span:first-of-type{margin-right:10px;}
             .content p:nth-child(4) span:last-of-type{margin-left:10px;}
 
             .body{width: 300px;margin: 0 auto;}
             .tmp-body{display:flex;padding:30px 0;}
             .tmp-body div{flex:1;}
-            .tmp-body div span{font-size:40px;}
+            .tmp-body div span:not([data-title]){font-size:40px;}
             .tmp-body div p{margin:0;font-size:12px;color:gray;}
             .tmp-body div:nth-child(1){text-align:right;border-right:1px solid silver;padding-right:20px;}
             .tmp-body div:nth-child(2){padding-left:20px;}
@@ -150,7 +186,7 @@ class XiaomiPurifier extends HTMLElement {
             .on .footer .status p{var(--primary-text-color); /*#222;*/}
             .on .footer div.active span{background:#01b6a5;color:white;}
             .on .footer div.active p{color: var(--primary-text-color); /*#222;*/}
-            .on .tmp-body div span{color:#01b6a5;}
+            .on .tmp-body div span:not([data-title]){color:#01b6a5;}
             
             /**空气状态**/
             .on .level-1{background-color:#01be9e;}
@@ -183,12 +219,12 @@ class XiaomiPurifier extends HTMLElement {
       if (ls.contains('off')) {
         ls.remove('off')
         ls.add('on')
-        this.toast('开启设备')
+        this.toast(this._t('Device turned on'));
         this.duang()
       } else {
         ls.remove('on')
         ls.add('off')
-        this.toast('关闭设备')
+        this.toast(this._t('Device truned off'));
       }
       this.call('toggle')
     }
@@ -317,7 +353,7 @@ class XiaomiPurifier extends HTMLElement {
 
   // 设置速度
   set_speed(speed) {
-    this.toast(`设置速度【${speed}】`)
+    this.toast(`${this._t('Set speed')}【${speed}】`)
     this.call('set_speed', { speed })
   }
 
@@ -361,17 +397,6 @@ class XiaomiPurifier extends HTMLElement {
     }
   }
 
-  // led灯切换
-  toggleLed() {
-    const entity_id = this.config.entity;
-    const state = hass.states[entityId];
-    const attrs = state.attributes;
-    // 如果当前开就关
-    hass.callService('fan', attrs['led'] ? 'xiaomi_miio_set_led_off' : 'xiaomi_miio_set_led_on', {
-      entity_id
-    });
-  }
-
   update({ title, mode, aqi, filter_life_remaining, temperature, humidity, state, favorite_level, buzzer, ledon }) {
     const { $,$$ } = this
 
@@ -380,12 +405,12 @@ class XiaomiPurifier extends HTMLElement {
     if (state === 'on' && ls.contains('off')) {
       ls.remove('off')
       ls.add('on')
-      $('.footer div:nth-child(1) p').textContent = '关闭'
+      $('.footer div:nth-child(1) p').textContent = this._t('Off');
       this.duang();
     } else if (state === 'off' && ls.contains('on')) {
       ls.remove('on')
       ls.add('off')
-      $('.footer div:nth-child(1) p').textContent = '开启';
+      $('.footer div:nth-child(1) p').textContent = this._t('On');
     }
     $('.title').textContent = title
 
@@ -405,32 +430,32 @@ class XiaomiPurifier extends HTMLElement {
     // 质量
     let qls = $('.content').classList
     qls.remove('level-1', 'level-2', 'level-3', 'level-4', 'level-5', 'level-6')
-    let quality = '优'
+    let quality = 'Good';
     if (aqi < 50) {
-      quality = '优'
+      quality = 'Good'
       qls.add('level-1')
     }
     else if (aqi < 100) {
-      quality = '良'
+      quality = 'Moderate'
       qls.add('level-2')
     }
     else if (aqi < 150) {
-      quality = '轻度污染'
+      quality = 'Mild Unhealthy'
       qls.add('level-3')
     }
     else if (aqi < 200) {
-      quality = '中度污染'
+      quality = 'Unhealthy'
       qls.add('level-4')
     }
     else if (aqi < 300) {
-      quality = '重度污染'
+      quality = 'Very Unhealthy'
       qls.add('level-5')
     }
     else {
-      quality = '严重污染'
+      quality = 'Hazardous'
       qls.add('level-6')
     }
-    $('.var-quality').textContent = quality
+    $('.var-quality').textContent = this._t(quality);
     $('.var-aqi').textContent = aqi
     // 模式
     let mls2 = $('.footer div:nth-child(2)').classList
@@ -471,7 +496,7 @@ class XiaomiPurifier extends HTMLElement {
     }
     if (state) {
       this.update({
-        title: title || attrs['friendly_name'] || '空气净化器',
+        title: title || attrs['friendly_name'] || this._t('Air Purifier'),
         mode: attrs['mode'] || '',
         aqi: attrs['aqi'] || 0,
         filter_life_remaining: attrs['filter_life_remaining'] || 0,
@@ -480,7 +505,7 @@ class XiaomiPurifier extends HTMLElement {
         state: state.state,
         filter_hours_used: attrs['filter_hours_used'] || 0,
         purify_volume: attrs['purify_volume'] || 0,
-        led: attrs['led'] ? '开启' : '关闭',
+        led: attrs['led'] ? this._t('On') : this._t('Off'),
         favorite_level: attrs['favorite_level'],
         buzzer: attrs['buzzer']||false,
         ledon: attrs['led']||false,
@@ -498,6 +523,10 @@ class XiaomiPurifier extends HTMLElement {
       throw new Error('你需要定义一个实体\n entity: 实体');
     }
     this.config = config;
+    const elems = this.shadow.querySelectorAll('[data-title]');
+    [].forEach.call(elems, (e)=> {
+      e.innerText = this._t(e.getAttribute('data-title'));
+    });
   }
 
   getCardSize() {
